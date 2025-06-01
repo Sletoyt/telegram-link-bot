@@ -44,7 +44,7 @@ async def main():
 
 # Entry point
 if __name__ == '__main__':
-     import asyncio
+    import asyncio
 
 if __name__ == "__main__":
     try:
