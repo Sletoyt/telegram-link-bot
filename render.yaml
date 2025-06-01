@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: link-to-file-bot
+    env: python
+    buildCommand: ""
+    startCommand: "python bot1.py"
+    envVars:
+      - key: BOT_TOKEN
+        value: 8065762603:AAGnyLy003YWFrkiQrAeyynQsl44PrftPJA
+      - key: CHANNEL_ID
+        value: -1002624797462
+        
