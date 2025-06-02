@@ -8,7 +8,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 BOT_TOKEN = "7960651818:AAFYfETT-JeASRu3_eVCifKc6LbBqZPR-yA"
 CHANNEL_ID = "-1002624797462"
 
-# फ़ाइल डाउनलोड करने वाला फ़ंक्शन
+# फ़ाइल डाउनलोड करने वाला async फ़ंक्शन
 async def download_file(url, filename):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
@@ -18,7 +18,7 @@ async def download_file(url, filename):
                 return True
             return False
 
-# /upload कमांड के लिए हैंडलर
+# /upload कमांड हैंडलर
 async def upload(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("❌ कृपया एक डायरेक्ट लिंक दें।\nउदाहरण: /upload <लिंक>")
@@ -31,23 +31,27 @@ async def upload(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if await download_file(url, filename):
         await context.bot.send_document(chat_id=CHANNEL_ID, document=open(filename, 'rb'))
-        await update.message.reply_text("✅ सफलतापूर्वक अपलोड कर दिया गया!")
+        await update.message.reply_text("✅ सफलतापूर्वक अपलोड हो गया!")
         os.remove(filename)
     else:
         await update.message.reply_text("❌ फ़ाइल डाउनलोड नहीं हो सकी।")
 
-# बॉट शुरू करने का मुख्य फंक्शन
+# मुख्य async function
 async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("upload", upload))
     await app.run_polling()
 
-# मुख्य प्रवेश बिंदु (Render में safe तरीके से asyncio इस्तेमाल किया गया है)
+# एंट्री पॉइंट — Safe asyncio launch for environments like Render
 if __name__ == "__main__":
     try:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(main())
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(main())
+        asyncio.run(main())
+    except RuntimeError as e:
+        if "event loop is closed" in str(e) or "Cannot close a running event loop" in str(e):
+            # जब रनिंग लूप बंद नहीं हो सकता (Render जैसी जगहों पर)
+            loop = asyncio.get_event_loop()
+            loop.create_task(main())
+            loop.run_forever()
+        else:
+            raise
+            
