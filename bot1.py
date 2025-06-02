@@ -1,14 +1,14 @@
 import os
-import asyncio
 import aiohttp
+import asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# बॉट टोकन और चैनल आईडी
+# Bot Token और Channel ID
 BOT_TOKEN = "7960651818:AAFYfETT-JeASRu3_eVCifKc6LbBqZPR-yA"
 CHANNEL_ID = "-1002624797462"
 
-# फ़ाइल डाउनलोड करने वाला async फ़ंक्शन
+# लिंक से फाइल डाउनलोड करने का async फ़ंक्शन
 async def download_file(url, filename):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
@@ -36,22 +36,21 @@ async def upload(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("❌ फ़ाइल डाउनलोड नहीं हो सकी।")
 
-# मुख्य async function
-async def main():
+# बॉट को शुरू करने वाला async फ़ंक्शन
+async def start_bot():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("upload", upload))
+    print("🤖 बॉट शुरू हो गया है...")
     await app.run_polling()
 
-# एंट्री पॉइंट — Safe asyncio launch for environments like Render
+# अगर Render या Jupyter जैसा environment है
+# तो event loop को दोबारा बंद करने की ज़रूरत नहीं होती
+
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
-    except RuntimeError as e:
-        if "event loop is closed" in str(e) or "Cannot close a running event loop" in str(e):
-            # जब रनिंग लूप बंद नहीं हो सकता (Render जैसी जगहों पर)
-            loop = asyncio.get_event_loop()
-            loop.create_task(main())
-            loop.run_forever()
-        else:
-            raise
-            
+        loop = asyncio.get_event_loop()
+        loop.create_task(start_bot())
+        loop.run_forever()
+    except KeyboardInterrupt:
+        print("बॉट बंद कर दिया गया।")
+    
